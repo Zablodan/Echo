@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/backgroundblack"
+    android:baselineAligned="false">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/imageView2"
+        android:layout_gravity="center"
+        android:src="@mipmap/layer_echo" />
+
+ <!--      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="by Daniel Zabłocki"
+        android:id="@+id/textView2"
+        android:autoText="false"
+        android:background="#000000"
+        android:textColor="#ffffff"
+        android:textSize="20dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="60dp"
+        android:elegantTextHeight="false"
+        android:layout_marginLeft="20dp"/> -->
+</FrameLayout>
+

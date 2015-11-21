@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Echo</string>
+    <string name="title_activity_main">Echo</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_about">About</string>
+    <string name="title_activity_about">About</string>
+    <string name="title_activity_audio">AudioActivity</string>
+</resources>
