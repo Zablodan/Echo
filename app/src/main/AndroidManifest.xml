@@ -19,7 +19,7 @@
         </activity>
         <activity
             android:name=".AudioActivity"
-            android:label=""
+            android:label="Echo"
             android:theme="@style/AppTheme.NoActionBar" >
         </activity>
         <activity

@@ -1,39 +1,32 @@
 package com.zablo.daniel.echo;
 
-import android.app.Dialog;
-import android.content.DialogInterface;
-import android.graphics.Color;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
+
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.RadioButton;
-
+import android.widget.ListView;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+
+
 
 public class AudioActivity extends AppCompatActivity {
 
-    private MediaRecorder recorder = null;
-    private int opformats[] = {MediaRecorder.OutputFormat.MPEG_4,
-                                MediaRecorder.OutputFormat.THREE_GPP};
-    private int curformat = 0;
-    private String filePath;
-    private String fileextn[] = {".mp4", ".3gpp"};
-    private View view;
+    private String filePath = Environment.getExternalStorageDirectory().getPath();
+    private File file = new File(filePath, "EchoSample");
+    private ArrayList<String> FilesInFolder = GetFiles(filePath + "/EchoSample");
+
+    private ExtAudioRecorder extAudioRecorder = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +34,36 @@ public class AudioActivity extends AppCompatActivity {
         setContentView(R.layout.activity_audio);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+
+        if(!file.exists()){
+            file.mkdir();
+            Log.v("Create Folder", filePath);
+        }
+
+
+        ListView lv;
+        lv = (ListView)findViewById(R.id.filelist);
+
+        lv.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, FilesInFolder));
+
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                Log.v("Item on lv clicked", "pos: " + position);
+                // Clicking on item
+            }
+        });
+
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+                                           int position, long id) {
+
+                Log.v("long clicked", "pos: " + position);
+
+                return true;
+            }
+        });
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -50,6 +73,8 @@ public class AudioActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+
     }
 
 
@@ -57,44 +82,41 @@ public class AudioActivity extends AppCompatActivity {
         Button RecBtn = (Button)findViewById(R.id.RecBtn);
         Button StopBtn = (Button)findViewById(R.id.StopBtn);
         startRecording();
-//        startRecordingWav(view);
         RecBtn.setClickable(false);
         StopBtn.setClickable(true);
     }
 
 
     public void onStopClick(View view) {
+        ListView lv;
+        lv = (ListView)findViewById(R.id.filelist);
         Button RecBtn = (Button)findViewById(R.id.RecBtn);
         Button StopBtn = (Button)findViewById(R.id.StopBtn);
         stopRecording();
-//      stopRecordingWav(view);
         StopBtn.setClickable(false);
         RecBtn.setClickable(true);
+        FilesInFolder = GetFiles(filePath + "/EchoSample");
+        lv.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, FilesInFolder));
     }
 
     private void stopRecording() {
-        if(recorder != null) {
-            recorder.stop();
-            recorder.reset();
-            recorder.release();
+        if(extAudioRecorder != null) {
+            extAudioRecorder.stop();
+            extAudioRecorder.release();
 
-            recorder = null;
+            extAudioRecorder = null;
         }
     }
 
 
     private void startRecording() {
 
-        recorder = new MediaRecorder();
-
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(opformats[curformat]);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-        recorder.setOutputFile(getFilePath());
+        extAudioRecorder = ExtAudioRecorder.getInstanse(false);
+        extAudioRecorder.setOutputFile(getFilePath());
 
         try{
-            recorder.prepare();
-            recorder.start();
+            extAudioRecorder.prepare();
+            extAudioRecorder.start();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -103,28 +125,30 @@ public class AudioActivity extends AppCompatActivity {
     public String getFilePath() {
         String filePath = Environment.getExternalStorageDirectory().getPath();
         File file = new File(filePath, "EchoSample");
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd_HH:mm:ss");
         String currentDateAndTime = sdf.format(new Date());
 
         if(!file.exists())
             file.mkdir();
 
-        return (file.getAbsolutePath() + "/" + currentDateAndTime + fileextn[curformat]);
+        return (file.getAbsolutePath() + "/" + currentDateAndTime + ".wav");
     }
 
-    public void onRadioClick(View view) {
-        boolean checked = ((RadioButton) view).isChecked();
+    public ArrayList<String> GetFiles(String DirectoryPath) {
+        ArrayList<String> MyFiles = new ArrayList<String>();
+        File f = new File(DirectoryPath);
 
-        // Check which radio button was clicked
-        switch(view.getId()) {
-            case R.id.gppButton:
-                if (checked)
-                    curformat = 1;
-                    break;
-            case R.id.mp4format:
-                if (checked)
-                    curformat = 0;
-                    break;
+        if(!f.exists())
+            f.mkdir();
+        File[] files = f.listFiles();
+        if (files.length == 0)
+            return null;
+        else {
+            for (int i=0; i<files.length; i++)
+                MyFiles.add(files[i].getName());
         }
+
+        return MyFiles;
     }
+
 }
