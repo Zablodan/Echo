@@ -1,42 +1,17 @@
 package com.zablo.daniel.echo;
 
-
-import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.IntentSender;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.database.DatabaseErrorHandler;
-import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Parcel;
-import android.os.UserHandle;
-import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.Display;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -45,15 +20,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 
 public class AudioActivity extends AppCompatActivity {
@@ -63,6 +32,7 @@ public class AudioActivity extends AppCompatActivity {
     private ArrayList<String> FilesInFolder = GetFiles(filePath + "/EchoSample");
     private Context actContext = this;
     private ExtAudioRecorder extAudioRecorder = null;
+    public static final String KEY_NAME = "key_name";
 
 
 
@@ -73,7 +43,7 @@ public class AudioActivity extends AppCompatActivity {
         setContentView(R.layout.activity_audio);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        Log.d("FilePath",file.getPath());
         if(!file.exists())
             file.mkdir();
 
@@ -128,16 +98,21 @@ public class AudioActivity extends AppCompatActivity {
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        File fileSelected = new File(file.getPath() + "/" + FilesInFolder.get(info.position));
         ListView lv;
         lv = (ListView)findViewById(R.id.filelist);
         switch (item.getItemId()) {
             case R.id.menuAnalyze:
                 //Analyze menu handle
+                Intent i = new Intent(AudioActivity.this, AnalyzeActivity.class);
+                i.putExtra(KEY_NAME,fileSelected.getPath());
+//                Log.d("FileLength:",Long.toString(fileSelected.length()));
+                startActivity(i);
                 return true;
             case R.id.menuDelete:
                 //Delete menu handle
-                File filedel = new File(file.getPath() + "/" + FilesInFolder.get(item.getOrder()));
-                filedel.delete();
+                fileSelected.delete();
                 FilesInFolder = GetFiles(filePath + "/EchoSample");
                 if(FilesInFolder==null) {
                     lv.setAdapter(null);
@@ -171,6 +146,7 @@ public class AudioActivity extends AppCompatActivity {
         FilesInFolder = GetFiles(filePath + "/EchoSample");
 
         lv.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, FilesInFolder));
+
     }
 
     private void stopRecording() {
@@ -214,12 +190,17 @@ public class AudioActivity extends AppCompatActivity {
 
         if(!f.exists())
             f.mkdir();
-        File[] files = f.listFiles();
+        try{
+        File[] files;
+        files = f.listFiles();
         if (files.length == 0)
             return null;
         else {
             for (int i=0; i<files.length; i++)
                 MyFiles.add(files[i].getName());
+        }
+        }catch (Exception e) {
+            e.printStackTrace();
         }
 
         return MyFiles;
