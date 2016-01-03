@@ -175,7 +175,7 @@ public class AudioActivity extends AppCompatActivity {
     public String getFilePath() {
         String filePath = Environment.getExternalStorageDirectory().getPath();
         File file = new File(filePath, "EchoSample");
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd_HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd_HH.mm.ss");
         String currentDateAndTime = sdf.format(new Date());
 
         if(!file.exists())
