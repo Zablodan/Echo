@@ -27,9 +27,21 @@ import java.nio.ByteOrder;
 
 public class AnalyzeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-    double[] b = {0.00886138484287286, 0, -0.0177227696857457, 0, 0.00886138484287286};
-    double[] a = {-3.56623390500889, 4.91027011761000, -3.09041699553028, 0.752059482463646};
-    int buffSize = 64;
+    double[][] b = {{0.000039296764981, 0, -0.000078593529962, 0, 0.000039296764981},
+                    {0.000155805914901,	0, -0.000311611829802, 0, 0.000155805914901},
+                    {0.000612416758853,	0, -0.001224833517706, 0, 0.000612416758853},
+                    {0.002366944651219,	0, -0.004733889302438, 0, 0.002366944651219},
+                    {0.008861384842873, 0, -0.017722769685746, 0, 0.008861384842873},
+                    {0.031356951842465,	0, -0.062713903684930, 0, 0.031356951842465},
+                    {0.101837333784289, 0, -0.203674667568578, 0, 0.101837333784289}};
+    double[][] a = {{-3.981559459679420, 5.945472787148730, -3.946261397152610, 0.982348169390472},
+                    {-3.961870007021670, 5.888793913787790, -3.891930251948570, 0.965007926229046},
+                    {-3.918823751633720, 5.769261524124240, -3.781653237866400, 0.931240307702049},
+                    {-3.818619281298950, 5.507523751882120, -3.555730199154570, 0.867208809765454},
+                    {-3.566233905008890, 4.910270117610000, -3.090416995530280, 0.752059482463646},
+                    {-2.889193822757620, 3.560473220464110, -2.159920874581690, 0.565800851909956},
+                    {-1.122549760301160, 1.248929688805890, -0.602526950267281, 0.324348050170275}};
+    int buffSize = 1000;
     byte[] buffer = new byte[buffSize];
     short[] buffShort = new short[buffSize/2];
     File filePath;
@@ -48,7 +60,7 @@ public class AnalyzeActivity extends AppCompatActivity
         Bundle bundleInputData = intentInput.getExtras();
         filePath = new File(bundleInputData.getString(AudioActivity.KEY_NAME));
 
-        filterOneFreq();
+        filterOneFreq(6);
 
         TextView tv = (TextView) findViewById(R.id.testview);
         int i;
@@ -140,14 +152,6 @@ public class AnalyzeActivity extends AppCompatActivity
         return true;
     }
 
-    public static String bytesToHex(byte[] in) {
-        final StringBuilder builder = new StringBuilder();
-        for(byte b : in) {
-            builder.append(String.format("%02x", b));
-        }
-        return builder.toString();
-    }
-
     public static short[] toBigEndian(byte[] In) {
         short[] out = new short[In.length/2];
         int i;
@@ -173,33 +177,42 @@ public class AnalyzeActivity extends AppCompatActivity
     }
 
 
-    public void filterOneFreq() {
+    public void filterOneFreq(int freq) {
         try {
             DataInputStream inputStream = new DataInputStream(new FileInputStream(filePath));
             DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(filePath.getPath().substring(0, filePath.getPath().length() -4) + "_fitr.wav"));
+            int available;
 
-            inputStream.read(buffer,0,44);
-            outputStream.write(buffer,0,44);//,0,44
+            inputStream.read(buffer, 0, 44);
+            outputStream.write(buffer, 0, 44);
 
+            inputStream.read(buffer);
             buffShort = toBigEndian(buffer);
-            buffShort = fFilter(buffShort);
+            buffShort = fFilter(buffShort, freq);
             buffer = toLittleEndian(buffShort);
             outputStream.write(buffer);
 
-            while(inputStream.read(buffer) != -1) {
+            while((available = inputStream.available()) > 0) {
 
+                inputStream.read(buffer);
                 buffShort = toBigEndian(buffer);
-                buffShort = Filter(buffShort);
+                buffShort = Filter(buffShort, freq);
                 buffer = toLittleEndian(buffShort);
-                outputStream.write(buffer);
+                if(available > buffSize)
+                    outputStream.write(buffer);
+                else
+                    outputStream.write(buffer,0,available);
+
             }
+            inputStream.close();
+            outputStream.close();
 
         } catch (IOException e){
             e.printStackTrace();
         }
     }
 
-    public short[] fFilter(short[] In){
+    public short[] fFilter(short[] In, int freq){
         short[] out = new short[In.length];
         double valX;
         double valY;
@@ -209,21 +222,21 @@ public class AnalyzeActivity extends AppCompatActivity
         for (k = 0; k < I; k++)
             out[k] = In[k];
         while (k < In.length - (I-1)){
-            valX = b[0] * In[k];
+            valX = b[freq][0] * In[k];
             valY = 0;
             for (n = 1; n < I; n++){
-                valX += (b[n] * In[k-n]);
-                valY += (a[n-1] * In[k-n]);
+                valX += (b[freq][n] * In[k-n]);
+                valY += (a[freq][n-1] * out[k-n]);
             }
             out[k++] = (short) (valX - valY);
         }
         while (k < In.length) {
             buffX[iBuff] = In[k];
-            valX = b[0] * In[k];
+            valX = b[freq][0] * In[k];
             valY = 0;
             for (n = 1; n < I; n++) {
-                valX += (b[n] * In[k - n]);
-                valY += (a[n - 1] * In[k - n]);
+                valX += (b[freq][n] * In[k - n]);
+                valY += (a[freq][n - 1] * out[k - n]);
             }
             out[k] = (short) (valX - valY);
             buffY[iBuff++] = out[k++];
@@ -232,43 +245,43 @@ public class AnalyzeActivity extends AppCompatActivity
         return out;
     }
 
-    public short[] Filter(short[] In){
+    public short[] Filter(short[] In, int freq){
         short[] out = new short[In.length];
-        double valX=0;
+        double valX;
         double valY;
-        int I = 5, k, n=0, e=0,g=0;
+        int I = 5, k, n=0, e,g;
         short iBuff = 0;
 
         for (k = 0; k < I; k++) {
-            valX = b[0] * In[k];
+            valX = b[freq][0] * In[k];
             valY = 0;
             for (g = k - 1; g >= 0; g--) {
-                valY += a[n++] * In[g];
-                valX += b[n] * In[g];
+                valY += a[freq][n++] *  out[g];
+                valX += b[freq][n] *  In[g];
             }
             for (e = I - 2; e >= k; e--) {
-                valY += a[n++] * buffY[e];
-                valX += b[n] * buffX[e];
+                valY += a[freq][n++] * buffY[e];
+                valX += b[freq][n] * buffX[e];
             }
             n = 0;
             out[k] = (short) (valX - valY);
         }
         while (k < In.length - (I-1)){
-            valX = b[0] * In[k];
+            valX = b[freq][0] *  In[k];
             valY = 0;
             for (n = 1; n < I; n++){
-                valX += (b[n] * In[k-n]);
-                valY += (a[n-1] * In[k-n]);
+                valX += (b[freq][n] *  In[k-n]);
+                valY += (a[freq][n-1] *  out[k-n]);
             }
             out[k++] = (short) (valX - valY);
         }
         while (k < In.length) {
-            buffX[iBuff] = In[k];
-            valX = b[0] * In[k];
+            buffX[iBuff] =  In[k];
+            valX = b[freq][0] *  In[k];
             valY = 0;
             for (n = 1; n < I; n++) {
-                valX += (b[n] * In[k - n]);
-                valY += (a[n - 1] * In[k - n]);
+                valX += (b[freq][n] *  In[k - n]);
+                valY += (a[freq][n - 1] * out[k - n]);
             }
             out[k] = (short) (valX - valY);
             buffY[iBuff++] = out[k++];
