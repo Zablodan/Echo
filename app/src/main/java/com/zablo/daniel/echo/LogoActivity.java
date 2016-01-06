@@ -19,7 +19,7 @@ public class LogoActivity extends AppCompatActivity {
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             public void run() {
-                Intent intent = new Intent (LogoActivity.this,MainActivity.class);
+                Intent intent = new Intent (LogoActivity.this,AudioActivity.class);
                 finish();
                 startActivity(intent);
             }

@@ -27,26 +27,23 @@ import java.nio.ByteOrder;
 
 public class AnalyzeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-    double[][] b = {{0.000039296764981, 0, -0.000078593529962, 0, 0.000039296764981},
-                    {0.000155805914901,	0, -0.000311611829802, 0, 0.000155805914901},
-                    {0.000612416758853,	0, -0.001224833517706, 0, 0.000612416758853},
-                    {0.002366944651219,	0, -0.004733889302438, 0, 0.002366944651219},
-                    {0.008861384842873, 0, -0.017722769685746, 0, 0.008861384842873},
-                    {0.031356951842465,	0, -0.062713903684930, 0, 0.031356951842465},
-                    {0.101837333784289, 0, -0.203674667568578, 0, 0.101837333784289}};
-    double[][] a = {{-3.981559459679420, 5.945472787148730, -3.946261397152610, 0.982348169390472},
-                    {-3.961870007021670, 5.888793913787790, -3.891930251948570, 0.965007926229046},
-                    {-3.918823751633720, 5.769261524124240, -3.781653237866400, 0.931240307702049},
-                    {-3.818619281298950, 5.507523751882120, -3.555730199154570, 0.867208809765454},
-                    {-3.566233905008890, 4.910270117610000, -3.090416995530280, 0.752059482463646},
-                    {-2.889193822757620, 3.560473220464110, -2.159920874581690, 0.565800851909956},
-                    {-1.122549760301160, 1.248929688805890, -0.602526950267281, 0.324348050170275}};
-    int buffSize = 1000;
-    byte[] buffer = new byte[buffSize];
-    short[] buffShort = new short[buffSize/2];
+    double[][] b = {{0.0062572858547160822, 0, -0.0062572858547160822},
+                    {0.012437238382855268,	0, -0.012437238382855268},
+                    {0.024572709022533383,	0, -0.024572709022533383},
+                    {0.047995743377957548,	0, -0.047995743377957548},
+                    {0.091807276894903089, 0, -0.091807276894903089},
+                    {0.16961665538039128,	0, -0.16961665538039128},
+                    { 0.29889181237078871, 0, -0.29889181237078871}};
+    double[][] a = {{-1.9871702394723854, 0.98748542829056796},
+                    {-1.9738726581032571, 0.97512552323428947},
+                    {-1.9459054887310585, 0.95085458195493333},
+                    {-1.884699766444327 , 0.90400851324408493},
+                    {-1.7428916379327266, 0.81638544621019371},
+                    {-1.3946966789565081, 0.66076668923921755},
+                    {-0.53961547799956111, 0.40221637525842263}};
+    short[] buffY = new short[b[0].length];
+    short[] buffX = new short[b[0].length];
     File filePath;
-    short[] buffY = new short[5];
-    short[] buffX = new short[5];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +57,7 @@ public class AnalyzeActivity extends AppCompatActivity
         Bundle bundleInputData = intentInput.getExtras();
         filePath = new File(bundleInputData.getString(AudioActivity.KEY_NAME));
 
-        filterOneFreq(6);
+        filterOneFreq(0);
 
         TextView tv = (TextView) findViewById(R.id.testview);
         int i;
@@ -180,8 +177,13 @@ public class AnalyzeActivity extends AppCompatActivity
     public void filterOneFreq(int freq) {
         try {
             DataInputStream inputStream = new DataInputStream(new FileInputStream(filePath));
-            DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(filePath.getPath().substring(0, filePath.getPath().length() -4) + "_fitr.wav"));
+            DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(filePath.getPath().substring(0, filePath.getPath().length() -4) + "_filtr1.wav"));
             int available;
+
+            int buffSize = (int) filePath.length();
+            byte[] buffer = new byte[buffSize];
+            short[] buffShort;
+
 
             inputStream.read(buffer, 0, 44);
             outputStream.write(buffer, 0, 44);
@@ -216,7 +218,7 @@ public class AnalyzeActivity extends AppCompatActivity
         short[] out = new short[In.length];
         double valX;
         double valY;
-        int I = 5, k, n;
+        int I = b[0].length, k, n;
         short iBuff = 0;
 
         for (k = 0; k < I; k++)
@@ -249,7 +251,7 @@ public class AnalyzeActivity extends AppCompatActivity
         short[] out = new short[In.length];
         double valX;
         double valY;
-        int I = 5, k, n=0, e,g;
+        int I = b[0].length, k, n=0, e,g;
         short iBuff = 0;
 
         for (k = 0; k < I; k++) {
