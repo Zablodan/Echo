@@ -33,6 +33,7 @@ public class AudioActivity extends AppCompatActivity {
     private Context actContext = this;
     private ExtAudioRecorder extAudioRecorder = null;
     public static final String KEY_NAME = "key_name";
+    MediaPlayer mPlayer = null;
 
 
 
@@ -43,7 +44,7 @@ public class AudioActivity extends AppCompatActivity {
         setContentView(R.layout.activity_audio);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        Log.d("FilePath",file.getPath());
+
         if(!file.exists())
             file.mkdir();
 
@@ -60,9 +61,15 @@ public class AudioActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 Log.v("Item on lv clicked", "pos: " + position);
                 // Clicking on item
-
+                try{
+                if(mPlayer.isPlaying()) {
+                    mPlayer.stop();
+                    mPlayer.release();
+                }} catch (Exception e){
+                    Log.e("Exception",e.toString());
+                }
                 Uri uri = Uri.parse(file.getPath() + "/" + FilesInFolder.get(position));
-                MediaPlayer mPlayer = MediaPlayer.create(actContext, uri);
+                mPlayer = MediaPlayer.create(actContext, uri);
                 mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 
                     @Override
@@ -74,17 +81,17 @@ public class AudioActivity extends AppCompatActivity {
                 mPlayer.start();
             }
         });
+    }
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+    @Override
+    public void onResume(){
+        super.onResume();
+        ListView lv;
+        lv = (ListView)findViewById(R.id.filelist);
 
+        FilesInFolder = GetFiles(filePath + "/EchoSample");
 
+        lv.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, FilesInFolder));
     }
 
     @Override
@@ -93,7 +100,13 @@ public class AudioActivity extends AppCompatActivity {
         super.onCreateContextMenu(menu, v, menuInfo);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.audiolist_menu, menu);
-
+        try{
+            if (mPlayer.isPlaying()) {
+                mPlayer.stop();
+                mPlayer.release();
+            }}catch (Exception e){
+            Log.e("Exception",e.toString());
+        }
     }
 
     @Override
@@ -102,12 +115,12 @@ public class AudioActivity extends AppCompatActivity {
         File fileSelected = new File(file.getPath() + "/" + FilesInFolder.get(info.position));
         ListView lv;
         lv = (ListView)findViewById(R.id.filelist);
+
         switch (item.getItemId()) {
             case R.id.menuAnalyze:
                 //Analyze menu handle
                 Intent i = new Intent(AudioActivity.this, AnalyzeActivity.class);
                 i.putExtra(KEY_NAME,fileSelected.getPath());
-//                Log.d("FileLength:",Long.toString(fileSelected.length()));
                 startActivity(i);
                 return true;
             case R.id.menuDelete:
@@ -127,26 +140,41 @@ public class AudioActivity extends AppCompatActivity {
     }
 
     public void onRecClick(View view) {
-        Button RecBtn = (Button)findViewById(R.id.RecBtn);
-        Button StopBtn = (Button)findViewById(R.id.StopBtn);
-        startRecording();
-        RecBtn.setClickable(false);
-        StopBtn.setClickable(true);
+        try{
+            if (mPlayer.isPlaying()) {
+                mPlayer.stop();
+                mPlayer.release();
+            }}catch (Exception e){
+            Log.e("Exception",e.toString());
+        }
+            Button RecBtn = (Button) findViewById(R.id.RecBtn);
+            Button StopBtn = (Button) findViewById(R.id.StopBtn);
+            startRecording();
+            RecBtn.setClickable(false);
+            StopBtn.setClickable(true);
+
     }
 
 
     public void onStopClick(View view) {
+        try{
+        if (mPlayer.isPlaying()) {
+            mPlayer.stop();
+            mPlayer.release();
+        }}catch (Exception e){
+            Log.e("Exception",e.toString());
+        }
         ListView lv;
-        lv = (ListView)findViewById(R.id.filelist);
-        Button RecBtn = (Button)findViewById(R.id.RecBtn);
-        Button StopBtn = (Button)findViewById(R.id.StopBtn);
+        lv = (ListView) findViewById(R.id.filelist);
+        Button RecBtn = (Button) findViewById(R.id.RecBtn);
+        Button StopBtn = (Button) findViewById(R.id.StopBtn);
         stopRecording();
         StopBtn.setClickable(false);
         RecBtn.setClickable(true);
+
         FilesInFolder = GetFiles(filePath + "/EchoSample");
 
         lv.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, FilesInFolder));
-
     }
 
     private void stopRecording() {

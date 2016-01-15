@@ -13,7 +13,7 @@
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Nagraj"
+        android:text="REC"
         android:id="@+id/RecBtn"
         android:onClick="onRecClick"
         android:layout_marginLeft="41dp"
